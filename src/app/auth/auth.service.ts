@@ -19,6 +19,7 @@ import * as fromAuth from './auth.actions';
 export class AuthService {
 
   private userSubscription: Subscription = new Subscription();
+  private usuario: User;
 
   constructor(  private afAuth: AngularFireAuth,
                 private router: Router,
@@ -32,11 +33,12 @@ export class AuthService {
       if ( fbUser ) {
         this.userSubscription = this.afDB.doc(`${fbUser.uid}/usuario`).valueChanges()
           .subscribe( (usuarioObj: any) => {
-            console.log(usuarioObj);
             const newUser = new User(usuarioObj);
             this.store.dispatch(new fromAuth.SetUserAction(newUser));
+            this.usuario = newUser;
           });
       } else {
+        this.usuario = null;
         this.userSubscription.unsubscribe();
       }
 
@@ -98,6 +100,8 @@ export class AuthService {
   logout() {
     this.router.navigate(['/login']);
     this.afAuth.auth.signOut();
+
+    this.store.dispatch(new fromAuth.UnsetUserAction());
   }
 
   isAuth() {
@@ -110,6 +114,10 @@ export class AuthService {
           return fbuser != null;
         })
       );
+  }
+
+  getUsuario() {
+    return {...this.usuario};
   }
 
 }
